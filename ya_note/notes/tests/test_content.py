@@ -1,27 +1,21 @@
-from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
-from django.urls import reverse
-
+from notes.forms import NoteForm
 from notes.models import Note
+from notes.tests.base_test_class_and_const import (
+    BaseTest, LIST_NOTES_URL, ADD_NOTE_URL, EDIT_NOTE_URL,
+    TESTING_NOTES_NUMBER,
+)
 
 
-TESTING_NOTES_NUMBER = 3
-
-User = get_user_model()
-
-
-class TestOrdering(TestCase):
+class TestOrdering(BaseTest):
     """Test for notes contetnt."""
-
-    NOTES_URL = reverse('notes:list')
 
     @classmethod
     def setUpTestData(cls):
-        cls.author = User.objects.create(username='Автор заметки')
+        super().setUpTestData()
         Note.objects.bulk_create(
             Note(
-                title=f'Заметка {index}',
-                text='Текст заметки.',
+                title=f'{cls.NOTE_TITLE} {index}',
+                text=cls.NOTE_TEXT,
                 slug=index,
                 author=cls.author,
             )
@@ -30,57 +24,39 @@ class TestOrdering(TestCase):
 
     def test_notes_order(self):
         """Проверка сортировки записей от первой к последней."""
-        self.client.force_login(self.author)
-        response = self.client.get(self.NOTES_URL)
+        response = self.author_client.get(LIST_NOTES_URL)
+        self.assertIn('object_list', response.context)
         object_list = response.context['object_list']
         notes_ids = [note.id for note in object_list]
         sorted_notes_ids = sorted(notes_ids)
         self.assertEqual(notes_ids, sorted_notes_ids)
 
 
-class TestNoteInContext(TestCase):
-
-    NOTES_URL = reverse('notes:list')
-    NOTE_ADD_URL = reverse('notes:add')
-    NOTE_TITLE = 'Note'
-    NOTE_TEXT = 'Initial note text.'
-    NOTE_SLUG = 'note'
+class TestNoteInContext(BaseTest):
 
     @classmethod
     def setUpTestData(cls):
-        cls.author = User.objects.create(username='Автор заметки')
-        cls.author_client = Client()
-        cls.author_client.force_login(cls.author)
-        cls.second_author = User.objects.create(username='Второй автор')
-        cls.note = Note.objects.create(
-            title=cls.NOTE_TITLE,
-            text=cls.NOTE_TEXT,
-            slug=cls.NOTE_SLUG,
-            author=cls.author,
-        )
-        cls.url_edit = reverse('notes:edit', args=(cls.note.slug,))
-
-        cls.form_data = {
-            'title': cls.NOTE_TITLE,
-            'text': cls.NOTE_TEXT,
-            'slug': cls.NOTE_SLUG,
-        }
+        super().setUpTestData()
 
     def test_note_in_context_when_needed(self):
         users_cases = (
-            (self.author, 1),
-            (self.second_author, 0),
+            (self.author_client, 1),
+            (self.second_author_client, 0),
         )
-        for user, note in users_cases:
-            self.client.force_login(user)
-            with self.subTest(user=user):
-                response = self.client.get(self.NOTES_URL)
+        for user_client, note in users_cases:
+            with self.subTest(user=user_client):
+                response = user_client.get(LIST_NOTES_URL)
                 object_list = response.context['object_list']
+                # Не понимаю, как соместить assertIS и in
+                # assertIS() берёт первое, второе и сравнивает с третьим
+                # у меня есть заметка в контексте, с чем и кчему её приравнять?
                 self.assertEqual(object_list.count(), note)
 
     def test_form_in_edit_add(self):
-        urls = (self.NOTE_ADD_URL, self.url_edit)
+        urls = (ADD_NOTE_URL, EDIT_NOTE_URL)
         for url in urls:
             response = self.author_client.get(url)
             with self.subTest(response):
                 self.assertIn('form', response.context)
+                form = response.context.get('form')
+                self.assertEqual(isinstance(form, NoteForm), True)

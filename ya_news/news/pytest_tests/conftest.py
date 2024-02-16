@@ -1,12 +1,18 @@
-import pytest
 from datetime import datetime, timedelta
 
+import pytest
 from django.conf import settings
 from django.test.client import Client
 from django.utils import timezone
 from django.urls import reverse
 
+from news.forms import BAD_WORDS
 from news.models import Comment, News
+
+
+@pytest.fixture(autouse=True)
+def db_connection(db):
+    return db
 
 
 @pytest.fixture
@@ -40,22 +46,12 @@ def news():
 
 
 @pytest.fixture
-def news_id(news):
-    return (news.id,)
-
-
-@pytest.fixture
 def author_comment(news, author):
     return Comment.objects.create(
         news=news,
         author=author,
         text='Текст комментария',
     )
-
-
-@pytest.fixture
-def author_comment_id(author_comment):
-    return (author_comment.id,)
 
 
 @pytest.fixture
@@ -86,29 +82,54 @@ def comment_list(news, author):
 
 
 @pytest.fixture
-def comment_text():
-    return 'Текст комментария'
-
-
-@pytest.fixture
-def form_data(comment_text):
+def comment_form_data():
     return {
-        'text': comment_text,
+        'text': 'Текст комментария',
     }
 
 
 @pytest.fixture
-def comment_text_new():
-    return 'Новый текст комментария'
-
-
-@pytest.fixture
-def form_data_new(comment_text_new):
+def comment_form_data_new():
     return {
-        'text': comment_text_new,
+        'text': 'Новый текст комментария',
     }
 
 
 @pytest.fixture
-def detail_url(news_id):
-    return reverse('news:detail', args=news_id)
+def detail_url(news):
+    return reverse('news:detail', args=(news.id,))
+
+
+@pytest.fixture
+def delete_url(author_comment):
+    return reverse('news:delete', args=(author_comment.id,))
+
+
+@pytest.fixture
+def edit_url(author_comment):
+    return reverse('news:edit', args=(author_comment.id,))
+
+
+@pytest.fixture
+def home_url():
+    return reverse('news:home')
+
+
+@pytest.fixture
+def login_url():
+    return reverse('users:login')
+
+
+@pytest.fixture
+def logout_url():
+    return reverse('users:logout')
+
+
+@pytest.fixture
+def signup_url():
+    return reverse('users:signup')
+
+
+@pytest.fixture
+def bad_words_data():
+    return {'text': f'Какой-то текст, {BAD_WORDS[0]}, еще текст'}

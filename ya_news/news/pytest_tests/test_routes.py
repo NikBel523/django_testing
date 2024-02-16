@@ -1,27 +1,33 @@
-import pytest
-
 from http import HTTPStatus
-from django.urls import reverse
 
+import pytest
 from pytest_django.asserts import assertRedirects
 
 
-@pytest.mark.django_db
+HOME_URL = pytest.lazy_fixture('home_url')
+SIGNUP_URL = pytest.lazy_fixture('signup_url')
+LOGOUT_URL = pytest.lazy_fixture('logout_url')
+LOGIN_URL = pytest.lazy_fixture('login_url')
+EDIT_URL = pytest.lazy_fixture('edit_url')
+DELETE_URL = pytest.lazy_fixture('delete_url')
+DETAIL_URL = pytest.lazy_fixture('detail_url')
+
+
+# Я предлогал, что в первой проверки речь идёт о анонимном пользователе
+# Или можно добавить в параметры условие наличия 2х статусов одного клиента?
+# 200 на часть url, и 404 на другую часть?
 @pytest.mark.parametrize(
-    'name, args',
+    'url',
     (
-        ('news:home', None),
-        ('news:detail', pytest.lazy_fixture('news_id')),
-        ('users:login', None),
-        ('users:logout', None),
-        ('users:signup', None),
+        HOME_URL,
+        DETAIL_URL,
+        LOGIN_URL,
+        LOGOUT_URL,
+        SIGNUP_URL,
     )
 )
-def test_pages_availability(client, name, args):
-    print(name, args)
-    url = reverse(name, args=args)
+def test_pages_availability_for_anonymous_client(client, url):
     response = client.get(url)
-    print(response)
     assert response.status_code == HTTPStatus.OK
 
 
@@ -33,26 +39,21 @@ def test_pages_availability(client, name, args):
     ),
 )
 @pytest.mark.parametrize(
-    'name',
-    ('news:edit', 'news:delete'),
+    'url',
+    (EDIT_URL, DELETE_URL),
 )
 def test_availability_for_comment_edit_and_delete(
-    parametrized_client, expected_status, name, author_comment_id
+    parametrized_client, expected_status, url
 ):
-    url = reverse(name, args=author_comment_id)
-    print(url)
     response = parametrized_client.get(url)
     assert response.status_code == expected_status
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
-    'name',
-    ('news:edit', 'news:delete'),
+    'url',
+    (EDIT_URL, DELETE_URL),
 )
-def test_redirect_for_anonymous_client(name, client, author_comment_id):
-    url = reverse(name, args=author_comment_id)
-    login_url = reverse('users:login')
+def test_redirect_for_anonymous_client(url, client, login_url):
     response = client.get(url)
     redirect_url = f'{login_url}?next={url}'
     assertRedirects(response, redirect_url)
