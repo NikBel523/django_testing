@@ -52,7 +52,7 @@ class TestNoteInContext(BaseTest):
     def test_form_in_edit_add(self):
         urls = (ADD_NOTE_URL, EDIT_NOTE_URL)
         for url in urls:
-            response = self.author_client.get(url)
-            with self.subTest(response):
+            with self.subTest(url):
+                response = self.author_client.get(url)
                 form = response.context.get('form')
                 self.assertIsInstance(form, NoteForm, True)

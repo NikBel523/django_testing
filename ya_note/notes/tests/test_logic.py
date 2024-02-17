@@ -22,7 +22,7 @@ class TestNoteCreation(BaseTest):
         self.assertEqual(notes_count_after, notes_count_before)
 
     def test_user_can_create_note(self):
-        self.author_client.delete(DELETE_NOTE_URL)
+        Note.objects.all().delete()
         response = self.author_client.post(ADD_NOTE_URL, data=self.form_data)
         self.assertRedirects(response, SUCCESS_NOTE_URL)
         notes_count = Note.objects.count()
