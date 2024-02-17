@@ -41,8 +41,7 @@ def reader_client(reader):
 
 @pytest.fixture
 def news():
-    news = News.objects.create(title='Заголовок', text='Текст')
-    return news
+    return News.objects.create(title='Заголовок', text='Текст')
 
 
 @pytest.fixture

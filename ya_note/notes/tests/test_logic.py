@@ -46,16 +46,16 @@ class TestNoteEditDelete(BaseTest):
         super().setUpTestData()
 
     def test_author_can_delete_note(self):
+        notes_count_before = Note.objects.count()
         response = self.author_client.delete(DELETE_NOTE_URL)
         self.assertRedirects(response, SUCCESS_NOTE_URL)
-        notes_count = Note.objects.count()
-        self.assertEquals(notes_count, 0)
+        self.assertEqual(Note.objects.count(), notes_count_before - 1)
 
     def test_user_cant_delete_anothers_note(self):
+        notes_count_before = Note.objects.count()
         response = self.second_author_client.delete(DELETE_NOTE_URL)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        notes_count = Note.objects.count()
-        self.assertEquals(notes_count, 1)
+        self.assertEqual(Note.objects.count(), notes_count_before)
 
     def test_author_can_edit_note(self):
         response = self.author_client.post(
@@ -93,13 +93,15 @@ class TestSlug(BaseTest):
         super().setUpTestData()
 
     def test_slugyfied_title(self):
-        self.client.force_login(self.author)
+        self.author_client.delete(DELETE_NOTE_URL)
+        self.form_data.pop('slug')
+        self.author_client.post(ADD_NOTE_URL, data=self.form_data)
         note = Note.objects.get()
         self.assertEqual(note.slug, slugify(self.NOTE_TITLE))
 
     def test_unique_slug(self):
-        self.client.force_login(self.author)
-        response = self.client.post(ADD_NOTE_URL, data=self.form_data)
+        notes_count_before = Note.objects.count()
+        response = self.author_client.post(ADD_NOTE_URL, data=self.form_data)
         self.assertFormError(
             response,
             form='form',
@@ -107,4 +109,4 @@ class TestSlug(BaseTest):
             errors=f'{self.note.slug}{WARNING}',
         )
         notes_count = Note.objects.count()
-        self.assertEqual(notes_count, 1)
+        self.assertEqual(notes_count, notes_count_before)

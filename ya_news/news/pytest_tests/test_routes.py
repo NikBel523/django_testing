@@ -13,9 +13,6 @@ DELETE_URL = pytest.lazy_fixture('delete_url')
 DETAIL_URL = pytest.lazy_fixture('detail_url')
 
 
-# Я предлогал, что в первой проверки речь идёт о анонимном пользователе
-# Или можно добавить в параметры условие наличия 2х статусов одного клиента?
-# 200 на часть url, и 404 на другую часть?
 @pytest.mark.parametrize(
     'url',
     (

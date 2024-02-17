@@ -40,23 +40,19 @@ class TestNoteInContext(BaseTest):
 
     def test_note_in_context_when_needed(self):
         users_cases = (
-            (self.author_client, 1),
-            (self.second_author_client, 0),
+            (self.author_client, True),
+            (self.second_author_client, False),
         )
         for user_client, note in users_cases:
             with self.subTest(user=user_client):
                 response = user_client.get(LIST_NOTES_URL)
                 object_list = response.context['object_list']
-                # Не понимаю, как соместить assertIS и in
-                # assertIS() берёт первое, второе и сравнивает с третьим
-                # у меня есть заметка в контексте, с чем и кчему её приравнять?
-                self.assertEqual(object_list.count(), note)
+                self.assertIs(self.note in object_list, note)
 
     def test_form_in_edit_add(self):
         urls = (ADD_NOTE_URL, EDIT_NOTE_URL)
         for url in urls:
             response = self.author_client.get(url)
             with self.subTest(response):
-                self.assertIn('form', response.context)
                 form = response.context.get('form')
-                self.assertEqual(isinstance(form, NoteForm), True)
+                self.assertIsInstance(form, NoteForm, True)

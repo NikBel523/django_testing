@@ -40,7 +40,7 @@ def test_comment_order(comment_list, detail_url, client):
     )
 )
 def test_form_in_client_context(
-    parametrized_client, form_in_context, detail_url,
+        parametrized_client, form_in_context, detail_url,
 ):
     response = parametrized_client.get(detail_url)
     form = response.context.get('form')

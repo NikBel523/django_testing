@@ -50,8 +50,6 @@ def test_user_cant_delete_comment_of_another_user(
         reader_client, delete_url,
 ):
     response = reader_client.delete(delete_url)
-    # Не понял замечаний к проверки статуса.
-    # Тут же сам view 404 выдаёт, а не переводит.
     assert response.status_code == HTTPStatus.NOT_FOUND
     comments_count = Comment.objects.count()
     assert comments_count == 1
